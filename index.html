@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Date and Data</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Set Inter font as the default for the webpage */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .record-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .record-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center bg-gray-100 text-gray-800 p-4">
+    <div class="text-center p-8 bg-white rounded-lg shadow-lg max-w-md w-full">
+        <h1 class="text-3xl sm:text-4xl font-bold text-blue-600 mb-6">
+            Date and Data
+        </h1>
+
+        <div class="mb-8 p-6 border border-gray-200 rounded-lg bg-gray-50">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Input</h2>
+
+            <div class="mb-4">
+                <label for="shelfDate" class="block text-lg font-medium text-gray-700 mb-2 text-left">
+                    Shelf date:
+                </label>
+                <input type="date" id="shelfDate" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-800">
+            </div>
+
+            <div class="mb-4">
+                <label for="likesInput" class="block text-lg font-medium text-gray-700 mb-2 text-left">
+                    Likes:
+                </label>
+                <input type="number" id="likesInput" value="0" min="0" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-800">
+            </div>
+
+            <div class="mb-4">
+                <label for="collectionsInput" class="block text-lg font-medium text-gray-700 mb-2 text-left">
+                    Collections:
+                </label>
+                <input type="number" id="collectionsInput" value="0" min="0" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-800">
+            </div>
+
+            <div class="mb-0"> <label for="commentsInput" class="block text-lg font-medium text-gray-700 mb-2 text-left">
+                    Comments:
+                </label>
+                <input type="number" id="commentsInput" value="0" min="0" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-gray-800">
+            </div>
+        </div>
+
+        <button id="calculateAllBtn" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-3 px-6 rounded-full transition duration-300 ease-in-out transform hover:scale-105 w-full mb-8">
+            Calculate
+        </button>
+
+        <div class="p-6 border border-gray-200 rounded-lg bg-gray-50 mb-8">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Output</h2>
+
+            <div id="dateResult" class="mb-4 text-xl font-semibold text-gray-800 bg-white p-4 rounded-lg border border-gray-200 min-h-[60px] flex items-center justify-center">
+                </div>
+
+            <div id="sumResult" class="mb-4 text-xl font-semibold text-gray-800 bg-white p-4 rounded-lg border border-gray-200 min-h-[60px] flex items-center justify-center">
+                </div>
+
+            <div id="averageResult" class="text-xl font-semibold text-gray-800 bg-white p-4 rounded-lg border border-gray-200 min-h-[60px] flex items-center justify-center">
+                </div>
+        </div>
+
+        <div class="p-6 border border-gray-200 rounded-lg bg-gray-50">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-6">Recent 10 Records</h2>
+            <div id="recentRecordsList" class="text-left text-lg text-gray-800 bg-white p-4 rounded-lg border border-gray-200 min-h-[100px]">
+                <p class="text-gray-500 text-center">No records yet.</p>
+            </div>
+        </div>
+
+        <p class="mt-8 text-sm text-gray-500">
+            &copy; 2025 My Webpage. All rights reserved.
+        </p>
+    </div>
+
+    <script>
+        // --- Get DOM elements ---
+        const shelfDateInput = document.getElementById('shelfDate');
+        const dateResultDiv = document.getElementById('dateResult');
+
+        const likesInput = document.getElementById('likesInput');
+        const collectionsInput = document.getElementById('collectionsInput');
+        const commentsInput = document.getElementById('commentsInput');
+        const calculateAllBtn = document.getElementById('calculateAllBtn');
+        const sumResultDiv = document.getElementById('sumResult');
+        const averageResultDiv = document.getElementById('averageResult');
+        const recentRecordsListDiv = document.getElementById('recentRecordsList');
+
+        // Initialize the date input field with today's date
+        const todayString = new Date().toISOString().split('T')[0];
+        shelfDateInput.value = todayString;
+
+        // Array to store records
+        let records = [];
+
+        // Function to load records from local storage
+        function loadRecords() {
+            const storedRecords = localStorage.getItem('calculationRecords');
+            if (storedRecords) {
+                records = JSON.parse(storedRecords);
+            }
+            displayRecentRecords();
+        }
+
+        // Function to save records to local storage
+        function saveRecords() {
+            localStorage.setItem('calculationRecords', JSON.stringify(records));
+        }
+
+        // Function to add a new record
+        function addRecord(date, sum, average) {
+            const newRecord = {
+                date: date,
+                sum: sum,
+                average: average,
+                timestamp: new Date().toLocaleString() // Add a timestamp for unique identification if needed
+            };
+            records.unshift(newRecord); // Add to the beginning
+            if (records.length > 10) {
+                records.pop(); // Keep only the last 10 records
+            }
+            saveRecords();
+            displayRecentRecords();
+        }
+
+        // Function to display recent records
+        function displayRecentRecords() {
+            recentRecordsListDiv.innerHTML = ''; // Clear previous records
+            if (records.length === 0) {
+                recentRecordsListDiv.innerHTML = '<p class="text-gray-500 text-center">No records yet.</p>';
+                return;
+            }
+
+            records.forEach((record, index) => {
+                const recordItem = document.createElement('div');
+                recordItem.classList.add('record-item');
+                recordItem.innerHTML = `
+                    <span>${record.date}</span>
+                    <span>Total: ${record.sum}</span>
+                    <span>Avg: ${record.average}</span>
+                `;
+                recentRecordsListDiv.appendChild(recordItem);
+            });
+        }
+
+        // Load records when the page loads
+        loadRecords();
+
+        // --- Event listener for the single calculation button ---
+        calculateAllBtn.addEventListener('click', () => {
+            // --- Date difference calculation part ---
+            const shelfDateValue = shelfDateInput.value;
+            let daysDifference = 0; // Initialize days difference
+            let dateMessage = '';
+
+            if (!shelfDateValue) {
+                dateResultDiv.textContent = 'Please select a date!';
+                dateResultDiv.classList.remove('bg-white', 'border-gray-200');
+                dateResultDiv.classList.add('bg-red-50', 'border-red-200', 'text-red-700');
+            } else {
+                const shelfDate = new Date(shelfDateValue);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0); // Set hours, minutes, seconds, milliseconds to 0 for date-only comparison
+                shelfDate.setHours(0, 0, 0, 0);
+
+                const timeDifference = shelfDate.getTime() - today.getTime();
+                // Convert milliseconds to days. Use Math.ceil to round up, e.g., 0.5 days counts as 1 day.
+                daysDifference = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+
+
+                if (daysDifference === 0) {
+                    dateMessage = 'Shelf date is today!';
+                } else if (daysDifference > 0) {
+                    dateMessage = `Shelf date is in the future, ${daysDifference} days remaining.`;
+                } else {
+                    dateMessage = `Shelf date was in the past, ${Math.abs(daysDifference)} days ago.`;
+                }
+                dateResultDiv.textContent = dateMessage;
+                dateResultDiv.classList.remove('bg-red-50', 'border-red-200', 'text-red-700');
+                dateResultDiv.classList.add('bg-white', 'border-gray-200', 'text-gray-800');
+            }
+
+            // --- Total sum calculation part ---
+            // Get and convert input values, default to 0 if empty
+            const likes = parseInt(likesInput.value) || 0;
+            const collections = parseInt(collectionsInput.value) || 0;
+            const comments = parseInt(commentsInput.value) || 0;
+
+            const totalSum = likes + collections + comments;
+
+            sumResultDiv.textContent = `Total: ${totalSum}`;
+            sumResultDiv.classList.remove('bg-red-50', 'border-red-200', 'text-red-700');
+            sumResultDiv.classList.add('bg-white', 'border-gray-200', 'text-gray-800');
+
+            // --- Daily average calculation part ---
+            let averageMessage = '';
+            let averagePerDay = 'N/A'; // Default for average
+            if (!shelfDateValue) {
+                averageMessage = 'Please select a shelf date to calculate daily average!';
+                averageResultDiv.classList.remove('bg-white', 'border-gray-200');
+                averageResultDiv.classList.add('bg-red-50', 'border-red-200', 'text-red-700');
+            } else {
+                if (daysDifference === 0) {
+                    averageMessage = 'Cannot calculate daily average (shelf date is today).';
+                } else if (daysDifference > 0) {
+                    averageMessage = 'Cannot calculate daily average (shelf date is in the future).';
+                } else {
+                    const daysPassed = Math.abs(daysDifference);
+                    if (daysPassed > 0) { // Avoid division by zero
+                        averagePerDay = (totalSum / daysPassed).toFixed(2); // Keep two decimal places
+                        averageMessage = `Daily Average: ${averagePerDay}`;
+                    } else {
+                        averageMessage = 'Cannot calculate daily average (no days passed).';
+                    }
+                }
+                averageResultDiv.classList.remove('bg-red-50', 'border-red-200', 'text-red-700');
+                averageResultDiv.classList.add('bg-white', 'border-gray-200', 'text-gray-800');
+            }
+            averageResultDiv.textContent = averageMessage;
+
+            // --- Add record to history ---
+            // Only add record if shelfDateValue is selected and calculation is meaningful
+            if (shelfDateValue) {
+                addRecord(shelfDateValue, totalSum, averagePerDay);
+            }
+        });
+    </script>
+</body>
+</html>
